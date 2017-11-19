@@ -3,34 +3,27 @@ const nconf = require('nconf');
 
 const delay = timeout => new Promise(resolve => setTimeout(resolve, timeout));
 
-async function waitUntil(action, timeout = 15000, delayDuration = 25) {
+const waitForClient = async (baseURL, timeout = 60000, delayDuration = 1000) => {
   let shouldStop = false;
-  const timeoutRef = setTimeout(() => (shouldStop = true), timeout);
   let error;
+  const client = axios.create({ baseURL });
+  const checkTimeout = setTimeout(() => (shouldStop = true), timeout);
   while (!shouldStop) {
     try {
-      await action();
-      clearTimeout(timeoutRef);
+      await client.get('/health');
+      clearTimeout(checkTimeout);
       return;
     } catch (ex) {
       error = ex;
     }
-    delayDuration && (await delay(delayDuration));
+    await delay(delayDuration);
   }
+  console.error(`unable to connect to ${baseURL}`);
   throw error;
-}
+};
 
-function waitForClient(baseURL, timeout = 60000, delayDuration = 1000) {
-  const client = axios.create({ baseURL });
-  return waitUntil(() => client.get('/health'), timeout, delayDuration);
-}
+const services = [nconf.get('EDITOR_URL'), nconf.get('TWEEK_API_URL'), nconf.get('AUTHORING_URL')];
 
-module.exports.waitForAllClients = async function() {
-  const services = [
-    nconf.get('EDITOR_URL'),
-    nconf.get('TWEEK_API_URL'),
-    nconf.get('AUTHORING_URL'),
-  ];
-
-  await Promise.all(services.map(waitForClient));
+module.exports.waitForAllClients = function() {
+  return Promise.all(services.map(s => waitForClient(s)));
 };
