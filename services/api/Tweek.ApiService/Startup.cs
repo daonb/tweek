@@ -108,7 +108,7 @@ namespace Tweek.ApiService
                 options.MapType(typeof(Dictionary<string,JsonValue>), () => new Schema {Type = "object"});
 
                 var basePath = PlatformServices.Default.Application.ApplicationBasePath;
-                var xmlPath = Path.Combine(basePath, "Tweek.ApiService.NetCore.xml");
+                var xmlPath = Path.Combine(basePath, "Tweek.ApiService.xml");
                 options.IncludeXmlComments(xmlPath);
 
             });
